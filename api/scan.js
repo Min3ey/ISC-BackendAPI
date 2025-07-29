@@ -1,5 +1,5 @@
 const scannedPlaces = require('../scannedPlaces');
-const whitelist = require('../whitelist'); // Optional: you can use an array or DB
+const whitelist = require('../utils/whitelist'); // Optional: you can use an array or DB
 const webhook = require('../webhook'); // Optional: your Discord webhook logic
 
 module.exports = async (req, res) => {
