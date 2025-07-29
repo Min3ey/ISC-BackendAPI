@@ -22,4 +22,4 @@ export default function handler(req, res) {
   scannedPlaces[placeId] = true;
   return res.status(200).json({ flagged: true, message: 'Now flagged' });
 }
-// Test
+// Test fixed api
