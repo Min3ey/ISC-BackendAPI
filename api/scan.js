@@ -1,37 +1,51 @@
-const whitelist = require('../utils/whitelist');
 const scannedPlaces = require('../scannedPlaces');
-const sendWebhook = require('../webhook');
+const whitelist = require('../whitelist'); // Optional: you can use an array or DB
+const webhook = require('../webhook'); // Optional: your Discord webhook logic
 
-const SECRET_KEY = process.env.API_SECRET;
+module.exports = async (req, res) => {
+  const { placeId, gameName, api_key } = req.body;
 
-module.exports = async function (req, res) {
-  // Accept api_key from headers, query, or body (for Roblox compatibility)
-  const apiKey = req.headers['x-api-key'] || req.query.api_key || req.body.api_key;
-  if (apiKey !== SECRET_KEY) {
-    return res.status(403).json({ error: 'Forbidden' });
+  if (api_key !== process.env.API_KEY) {
+    return res.status(403).json({ error: "Forbidden" });
   }
 
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Only POST allowed' });
+  const isWhitelisted = whitelist.includes(placeId);
+  const alreadyFlagged = scannedPlaces.has(placeId);
+
+  if (isWhitelisted) {
+    return res.json({
+      placeId,
+      gameName,
+      whitelisted: true,
+      flagged: false,
+      wasAlreadyFlagged: false,
+      message: "Place is on the whitelist"
+    });
   }
 
-  const { placeId, gameName } = req.body;
-  if (!placeId) {
-    return res.status(400).json({ error: 'Missing placeId' });
+  if (alreadyFlagged) {
+    return res.json({
+      placeId,
+      gameName,
+      whitelisted: false,
+      flagged: true,
+      wasAlreadyFlagged: true,
+      message: "Already flagged previously"
+    });
   }
 
-  if (whitelist.includes(Number(placeId))) {
-    return res.json({ flagged: false, message: 'Whitelisted' });
-  }
+  // Not whitelisted and not scanned — flag it
+  scannedPlaces.add(placeId);
 
-  if (scannedPlaces[placeId]) {
-    return res.json({ flagged: true, message: 'Already flagged' });
-  }
+  // Optional: trigger Discord webhook or logging
+  await webhook.sendReport({ placeId, gameName });
 
-  scannedPlaces[placeId] = true;
-
-  // Send webhook, but don't wait for it (fire and forget)
-  sendWebhook(placeId, gameName).catch(console.error);
-
-  return res.json({ flagged: true, message: 'Now flagged and webhook sent' });
+  return res.json({
+    placeId,
+    gameName,
+    whitelisted: false,
+    flagged: true,
+    wasAlreadyFlagged: false,
+    message: "Now flagged and webhook sent"
+  });
 };
