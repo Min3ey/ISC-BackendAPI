@@ -13,3 +13,4 @@ export default function handler(req, res) {
   const flagged = !!scannedPlaces[placeId];
   return res.status(200).json({ flagged, placeId });
 }
+// pls?
