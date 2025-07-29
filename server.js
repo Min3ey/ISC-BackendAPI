@@ -1,8 +1,8 @@
 const express = require('express');
 const app = express();
 
-const scanHandler = require('./api/scan');
-const statusHandler = require('./api/status');
+const scanHandler = require('/api/scan');
+const statusHandler = require('/api/status');
 
 app.use(express.json());
 
